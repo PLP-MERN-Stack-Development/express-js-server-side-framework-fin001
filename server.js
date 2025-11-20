@@ -2,8 +2,23 @@
 
 // Import required modules
 const express = require('express');
+const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const { v4: uuidv4 } = require('uuid');
+
+const connectDB = require('./config/db');
+dotenv.config();
+
+// Import all custom middleware and error utilities
+const {
+  requestLogger,
+  authenticate,
+  NotFoundError,
+  ValidationError,
+  asyncHandler,
+  errorHandler
+} = require('./middleware/customMiddleware');
+
 
 // Initialize Express app
 const app = express();
@@ -40,9 +55,15 @@ let products = [
   }
 ];
 
+// Connect to MongoDB
+connectDB();
+
+// Product routes
+app.use('/api/products', require('./routes/productRoutes'));
+
 // Root route
 app.get('/', (req, res) => {
-  res.send('Welcome to the Product API! Go to /api/products to see all products.');
+  res.send('Hello World !!! Welcome to the Product API! Go to /api/products to see all products.');
 });
 
 // TODO: Implement the following routes:
@@ -52,15 +73,19 @@ app.get('/', (req, res) => {
 // PUT /api/products/:id - Update a product
 // DELETE /api/products/:id - Delete a product
 
+
 // Example route implementation for GET /api/products
 app.get('/api/products', (req, res) => {
   res.json(products);
 });
 
-// TODO: Implement custom middleware for:
-// - Request logging
-// - Authentication
-// - Error handling
+
+
+// --- Use Custom Middleware ---
+app.use(requestLogger);
+app.use('/api/products', authenticate);
+// (You can use NotFoundError, ValidationError, asyncHandler in your routes as needed)
+app.use(errorHandler);
 
 // Start the server
 app.listen(PORT, () => {
